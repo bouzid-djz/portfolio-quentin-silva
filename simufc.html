@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Simulateur Combat UFC & Foot Amélioré</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+  body {
+    margin: 0; padding: 0;
+    font-family: 'Share Tech Mono', monospace;
+    background-color: #0a0a0a;
+    color: #00ffcc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    justify-content: flex-start;
+    padding: 30px 10px 60px;
+  }
+
+  h1 {
+    margin-bottom: 15px;
+    border-bottom: 3px solid #00ffcc;
+    padding-bottom: 10px;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  select, button {
+    background: #111;
+    color: #00ffcc;
+    border: 2px solid #00ffcc;
+    padding: 10px 15px;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+    min-width: 180px;
+  }
+
+  select:hover, button:hover {
+    background: #003333;
+  }
+
+  #result {
+    margin-top: 10px;
+    padding: 20px;
+    border: 2px solid #00ffcc;
+    border-radius: 10px;
+    width: 350px;
+    text-align: center;
+    background: #001a1a;
+    box-shadow: 0 0 15px #00ffccaa;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  #result.show {
+    opacity: 1;
+  }
+
+  .fighter {
+    font-weight: bold;
+    color: #00e6ac;
+  }
+
+  h2 {
+    margin-top: 40px;
+    color: #00e6ac;
+    border-bottom: 2px solid #00ffcc;
+    padding-bottom: 6px;
+    margin-bottom: 15px;
+  }
+
+  #history {
+    max-width: 400px;
+    background: #111;
+    border: 1px solid #00ffcc55;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 0 10px #00ffcc66;
+    font-size: 0.9rem;
+    max-height: 180px;
+    overflow-y: auto;
+    color: #00e6ac;
+  }
+
+  #stats {
+    max-width: 400px;
+    background: #111;
+    border: 1px solid #00ffcc55;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 0 10px #00ffcc66;
+    font-size: 0.9rem;
+    margin-top: 15px;
+    color: #00e6ac;
+  }
+
+  #resetHistory {
+    background: transparent;
+    border: 1px solid #00ffcc;
+    padding: 5px 10px;
+    margin-top: 10px;
+    color: #00ffcc;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.9rem;
+  }
+
+  #resetHistory:hover {
+    background: #003333;
+  }
+
+  @media (max-width: 480px) {
+    select, button {
+      min-width: 100%;
+    }
+    #result, #history, #stats {
+      width: 100%;
+      max-width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>Simulateur Combat UFC & Foot Amélioré</h1>
+
+<div class="controls">
+  <select id="fighter1"></select>
+  <select id="fighter2"></select>
+  <button id="fightBtn">Lancer le combat</button>
+</div>
+
+<div id="result"></div>
+
+<h2>Historique des combats</h2>
+<div id="history"></div>
+<button id="resetHistory">Effacer l'historique</button>
+
+<h2>Statistiques des victoires</h2>
+<div id="stats"></div>
+
+<script>
+  const fighters = [
+    'Ilia Topuria',
+    'Charles Oliveira',
+    'Islam Makhachev',
+    'Khabib Nurmagomedov',
+    'Conor McGregor',
+    'Jon Jones',
+    'Israel Adesanya',
+    'Stipe Miocic',
+    'Francis Ngannou',
+    'Dustin Poirier',
+    'Max Holloway',
+    'Jorge Masvidal',
+    'Justin Gaethje',
+    'Royce Gracie',
+    'Ken Shamrock',
+    'Tito Ortiz',
+    'Randy Couture',
+    'Chuck Liddell',
+    'BJ Penn',
+    'Anderson Silva',
+    'Georges Saint-Pierre',
+    'Fedor Emilianenko',
+    'Mirko Cro Cop',
+    'Mauricio RUA',
+    'Dominick Cruz',
+    'TJ Dillashaw',
+    'Jose Aldo',
+    'Kamaru Usman',
+    'Demetrious Jhonson',
+    'Cowboy Cerrone',
+    'Nate Diaz',
+    'Nick Diaz',
+    'Chael Sonnen',
+    'Alexander Gustafsson',
+    'Alexandre Pantoja',
+    'Alexandre Volkanovski',
+    'Merab Dvalishvili',
+
+  ];
+
+  const fighter1Select = document.getElementById('fighter1');
+  const fighter2Select = document.getElementById('fighter2');
+  const resultDiv = document.getElementById('result');
+  const fightBtn = document.getElementById('fightBtn');
+  const historyDiv = document.getElementById('history');
+  const statsDiv = document.getElementById('stats');
+  const resetBtn = document.getElementById('resetHistory');
+
+  // Remplissage des selects
+  function fillSelect(select) {
+    select.innerHTML = '<option value="">-- Choisir --</option>';
+    fighters.forEach(f => {
+      const option = document.createElement('option');
+      option.value = f;
+      option.textContent = f;
+      select.appendChild(option);
+    });
+  }
+  fillSelect(fighter1Select);
+  fillSelect(fighter2Select);
+
+  // Stockage historique + stats
+  let history = [];
+  let stats = {};
+
+  function updateStats(winner) {
+    if (!stats[winner]) stats[winner] = 0;
+    stats[winner]++;
+  }
+
+  function renderHistory() {
+    if (history.length === 0) {
+      historyDiv.textContent = 'Aucun combat enregistré.';
+      return;
+    }
+    historyDiv.innerHTML = '';
+    history.slice().reverse().forEach((entry, i) => {
+      const div = document.createElement('div');
+      div.textContent = `${entry.winner} a battu ${entry.loser} (${entry.method}, round ${entry.round})`;
+      historyDiv.appendChild(div);
+    });
+  }
+
+  function renderStats() {
+    if (Object.keys(stats).length === 0) {
+      statsDiv.textContent = 'Pas encore de victoires enregistrées.';
+      return;
+    }
+    statsDiv.innerHTML = '';
+    // Trier par nb victoires décroissant
+    const sorted = Object.entries(stats).sort((a,b) => b[1] - a[1]);
+    sorted.forEach(([fighter, wins]) => {
+      const div = document.createElement('div');
+      div.textContent = `${fighter} : ${wins} victoire${wins > 1 ? 's' : ''}`;
+      statsDiv.appendChild(div);
+    });
+  }
+
+  fightBtn.addEventListener('click', () => {
+    const f1 = fighter1Select.value;
+    const f2 = fighter2Select.value;
+
+    if (!f1 || !f2) {
+      resultDiv.textContent = 'Choisissez les deux combattants !';
+      resultDiv.classList.add('show');
+      return;
+    }
+    if (f1 === f2) {
+      resultDiv.textContent = 'Choisissez deux combattants différents !';
+      resultDiv.classList.add('show');
+      return;
+    }
+
+    // Simuler résultat
+    const winner = Math.random() < 0.5 ? f1 : f2;
+    const loser = winner === f1 ? f2 : f1;
+    const round = Math.floor(Math.random() * 5) + 1;
+    const method = ['KO', 'Soumission', 'Décision', 'TKO'][Math.floor(Math.random() * 4)];
+
+    resultDiv.innerHTML = `
+      🥊 <span class="fighter">${winner}</span> a gagné contre <span class="fighter">${loser}</span><br/>
+      🔥 Méthode : ${method}<br/>
+      ⏱ Round : ${round}
+    `;
+    resultDiv.classList.add('show');
+
+    // Ajouter à l'historique + stats
+    history.push({ winner, loser, round, method });
+    updateStats(winner);
+    renderHistory();
+    renderStats();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    if (confirm('Effacer tout l’historique et les stats ?')) {
+      history = [];
+      stats = {};
+      renderHistory();
+      renderStats();
+      resultDiv.textContent = '';
+      resultDiv.classList.remove('show');
+    }
+  });
+
+  // Init affichage
+  renderHistory();
+  renderStats();
+</script>
+<button onclick="window.location.href='index.html'" style="position:fixed; top:10px; left:10px; padding:8px 15px; background:#00cc99; border:none; border-radius:5px; color:#fff; cursor:pointer; font-family: 'Share Tech Mono', monospace; z-index: 1000;">
+  ← Accueil
+</button>
+
+
+</body>
+</html>
