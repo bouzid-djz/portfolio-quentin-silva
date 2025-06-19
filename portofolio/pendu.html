@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jeu du Pendu - Validation automatique</title>
+<style>
+  body {
+    font-family: 'Share Tech Mono', monospace;
+    background-color: #0a0a0a;
+    color: #00ffcc;
+    padding: 30px;
+    text-align: center;
+    user-select: none;
+  }
+  #wordDisplay {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    letter-spacing: 0.3em;
+  }
+  input[type="text"] {
+    font-size: 1.5rem;
+    width: 40px;
+    text-align: center;
+    text-transform: uppercase;
+  }
+  button {
+    font-size: 1.1rem;
+    margin-left: 10px;
+    cursor: pointer;
+  }
+  #message {
+    margin-top: 20px;
+    font-size: 1.2rem;
+  }
+  #lettersUsed {
+    margin-top: 15px;
+    font-size: 1.1rem;
+    color: #ff6600;
+  }
+</style>
+</head>
+<body>
+
+<h1>Jeu du Pendu - Validation automatique</h1>
+
+<div id="wordDisplay">_ _ _ _ _ _ _ _</div>
+
+<input id="letterInput" maxlength="1" autofocus autocomplete="off" />
+<button id="resetBtn">Nouvelle partie</button>
+
+<div id="message"></div>
+<div id="lettersUsed"></div>
+
+<script>
+  const words = [
+    'Ilia Topuria',
+    'Charles Oliveira',
+    'Islam Makhachev',
+    'Khabib Nurmagomedov',
+    'Conor McGregor',
+    'Jon Jones',
+    'Israel Adesanya',
+    'Stipe Miocic',
+    'Francis Ngannou',
+    'Dustin Poirier',
+    'Max Holloway',
+    'Jorge Masvidal',
+    'Justin Gaethje',
+    'Royce Gracie',
+    'Ken Shamrock',
+    'Tito Ortiz',
+    'Randy Couture',
+    'Chuck Liddell',
+    'BJ Penn',
+    'Anderson Silva',
+    'Georges Saint-Pierre',
+    'Fedor Emilianenko',
+    'Mirko Cro Cop',
+    'Mauricio Shogun RUA',
+    'Dominick Cruz',
+    'TJ Dillashaw',
+    'Jose Aldo',
+    'Kamaru Usman',
+    'Demetrious Johnson',
+    'Cowboy Cerrone',
+    'Nate Diaz',
+    'Nick Diaz',
+    'Chael Sonnen',
+    'Alexander Gustafsson',
+    'Alexandre Pantoja',
+    'Sean O\'Malley',
+    'Merab Dvalishvili'
+  ];
+
+  let currentWord = '';
+  let guessedLetters = new Set();
+  let wrongGuesses = 0;
+  const maxWrong = 8;
+
+  const wordDisplay = document.getElementById('wordDisplay');
+  const letterInput = document.getElementById('letterInput');
+  const resetBtn = document.getElementById('resetBtn');
+  const message = document.getElementById('message');
+  const lettersUsed = document.getElementById('lettersUsed');
+
+  function prepareWord() {
+    const randomIndex = Math.floor(Math.random() * words.length);
+    currentWord = words[randomIndex].toUpperCase();
+    guessedLetters.clear();
+    wrongGuesses = 0;
+    message.textContent = '';
+    lettersUsed.textContent = '';
+    letterInput.disabled = false;
+    letterInput.value = '';
+    displayWord();
+    letterInput.focus();
+  }
+
+  function maskPart(part) {
+    return part.split('').map(ch => {
+      if (ch === ' ') return ' ';
+      if (guessedLetters.has(ch) || !/[A-Z]/.test(ch)) return ch;
+      return '_';
+    }).join(' ');
+  }
+
+  function displayWord() {
+    const parts = currentWord.split(' ');
+    const affichage = parts.map((part, i) => {
+      const color = i % 2 === 0 ? '#00e6ac' : '#ff66cc';
+      return `<span style="color:${color}">${maskPart(part)}</span>`;
+    }).join('   ');
+    wordDisplay.innerHTML = affichage;
+  }
+
+  function updateLettersUsed() {
+    lettersUsed.textContent = "Lettres utilisées : " + [...guessedLetters].join(' ');
+  }
+
+  function checkWin() {
+    for (let ch of currentWord) {
+      if (/[A-Z]/.test(ch) && !guessedLetters.has(ch)) return false;
+    }
+    return true;
+  }
+
+  function gameOver(win) {
+    if (win) {
+      message.style.color = '#00ff00';
+      message.textContent = 'Bravo ! Tu as deviné le nom complet.';
+    } else {
+      message.style.color = '#ff3300';
+      message.textContent = `Perdu ! Le nom était : ${currentWord}`;
+    }
+    letterInput.disabled = true;
+  }
+
+  function guessLetter(letter) {
+    letter = letter.toUpperCase();
+    if (!letter.match(/^[A-Z]$/)) {
+      message.style.color = '#ff6600';
+      message.textContent = "Entre une lettre valide.";
+      return;
+    }
+    if (guessedLetters.has(letter)) {
+      message.style.color = '#ff6600';
+      message.textContent = "Tu as déjà essayé cette lettre.";
+      return;
+    }
+
+    guessedLetters.add(letter);
+    updateLettersUsed();
+
+    if (!currentWord.includes(letter)) {
+      wrongGuesses++;
+      message.style.color = '#ff3300';
+      message.textContent = `Lettre incorrecte ! Erreurs : ${wrongGuesses} / ${maxWrong}`;
+      if (wrongGuesses >= maxWrong) {
+        gameOver(false);
+      }
+    } else {
+      message.style.color = '#00ff00';
+      message.textContent = "Bonne lettre !";
+      displayWord();
+      if (checkWin()) {
+        gameOver(true);
+      }
+    }
+  }
+
+  letterInput.addEventListener('input', (e) => {
+    const val = e.target.value.toUpperCase();
+    if (val.length === 1) {
+      guessLetter(val);
+      letterInput.value = '';
+    }
+  });
+
+  resetBtn.addEventListener('click', prepareWord);
+
+  // Lancer le jeu avec un mot aléatoire au départ
+  prepareWord();
+</script>
+
+<button onclick="window.location.href='index.html'" style="position:fixed; top:10px; left:10px; padding:8px 15px; background:#00cc99; border:none; border-radius:5px; color:#fff; cursor:pointer; font-family: 'Share Tech Mono', monospace; z-index: 1000;">
+  ← Accueil
+</button>
+
+</body>
+</html>
