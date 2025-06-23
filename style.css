@@ -21,9 +21,9 @@ a:hover, a:focus {
   outline: none;
 }
 a:focus {
-  outline: 2px dashed #00ffff;
-  outline-offset: 3px;
+  outline: none;
 }
+
 
 /* === Background animated lines === */
 .background-lines {
